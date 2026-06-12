@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Child welfare</string>
+    <string name="title_activity_main">Child welfare</string>
+    <string name="package_name">com.childwelfare.app</string>
+    <string name="custom_url_scheme">com.childwelfare.app</string>
+</resources>

@@ -1,0 +1,3 @@
+{"runDate":"2026-05-26T07:21:01.392Z","pass":115,"fail":0,"coveragePct":87,"readiness":"Demo Ready","critical":0}
+{"runDate":"2026-05-27T04:29:57.881Z","pass":116,"fail":0,"coveragePct":86,"readiness":"Demo Ready","critical":0}
+{"runDate":"2026-05-27T05:20:15.680Z","pass":108,"fail":13,"coveragePct":79,"readiness":"Internal QA","critical":0}

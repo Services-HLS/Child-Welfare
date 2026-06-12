@@ -1,0 +1,11 @@
+export { SessionScoreCard } from "./SessionScoreCard";
+export { EngagementTrendChart } from "./EngagementTrendChart";
+export { ClassroomHeatmap } from "./ClassroomHeatmap";
+export { SessionTimeline } from "./SessionTimeline";
+export { AIObservationPanel } from "./AIObservationPanel";
+export { CoachingRecommendations } from "./CoachingRecommendations";
+export { SessionRiskIndicator } from "./SessionRiskIndicator";
+export { ClassroomSummaryCard } from "./ClassroomSummaryCard";
+export { SessionPlaybackViewer } from "./SessionPlaybackViewer";
+export { SessionComparisonMode } from "./SessionComparisonMode";
+export { ClassroomDashboardStrip } from "./ClassroomDashboardStrip";
