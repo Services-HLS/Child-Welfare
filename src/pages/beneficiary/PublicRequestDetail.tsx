@@ -4,6 +4,8 @@ import { usePublicPortal } from "@/hooks/usePublicPortal";
 import { getPublicRequestById, submitterLabel } from "@/services/public/publicRequestService";
 import { PublicPageHeader } from "@/components/beneficiary/ParentPageHeader";
 import { PublicEvidenceGallery } from "@/components/public/PublicEvidenceGallery";
+import { OcrEvidencePanel } from "@/components/public/OcrEvidencePanel";
+import { EvidenceUrlPreview } from "@/components/public/EvidenceMediaTile";
 import { PublicGrievanceTimeline } from "@/components/public/PublicGrievanceTimeline";
 import { GrievanceAction } from "@/types/public-request";
 import { format } from "date-fns";
@@ -80,6 +82,10 @@ export default function PublicRequestDetail() {
     toast.success("Download started", { description: `Reference ${request.referenceId} — demo export` });
   };
 
+  const ocrEvidence = request.evidence.filter((e) => e.type === "ocr");
+  const mediaEvidence = request.evidence.filter((e) => e.type !== "ocr");
+  const transcriptEvidence = request.evidence.filter((e) => e.type === "transcript" || e.type === "text");
+
   return (
     <div className="space-y-6 pb-28 w-full">
       <button
@@ -132,14 +138,27 @@ export default function PublicRequestDetail() {
       </Section>
 
       <Section title="Uploaded Evidence">
-        <PublicEvidenceGallery items={request.evidence} />
+        {mediaEvidence.length > 0 && <PublicEvidenceGallery items={mediaEvidence} />}
+        {ocrEvidence.length > 0 && (
+          <div className={mediaEvidence.length > 0 ? "mt-3 space-y-3" : "space-y-3"}>
+            {ocrEvidence.map((item) => (
+              <OcrEvidencePanel key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+        {mediaEvidence.length === 0 && ocrEvidence.length === 0 && (
+          <p className="text-sm text-slate-500">No evidence attached to this submission yet.</p>
+        )}
       </Section>
 
       <Section title="Extracted Content">
-        {request.evidence.filter((e) => e.type === "ocr" || e.type === "transcript" || e.type === "text").length > 0 ? (
-          <PublicEvidenceGallery
-            items={request.evidence.filter((e) => e.type === "ocr" || e.type === "transcript" || e.type === "text")}
-          />
+        {ocrEvidence.length > 0 || transcriptEvidence.length > 0 ? (
+          <div className="space-y-3">
+            {ocrEvidence.map((item) => (
+              <OcrEvidencePanel key={`extract-${item.id}`} item={item} compact />
+            ))}
+            {transcriptEvidence.length > 0 && <PublicEvidenceGallery items={transcriptEvidence} />}
+          </div>
         ) : (
           <p className="text-sm text-slate-500">No OCR or transcript extracted for this channel.</p>
         )}
@@ -200,16 +219,16 @@ export default function PublicRequestDetail() {
                 {request.resolution.beforeUrl && (
                   <div>
                     <p className="text-[10px] font-bold uppercase text-slate-500 mb-1">Before</p>
-                    <img src={request.resolution.beforeUrl} alt="" className="rounded-lg border w-full max-h-40 object-cover" />
+                    <EvidenceUrlPreview url={request.resolution.beforeUrl} label="Before evidence" compact />
                   </div>
                 )}
                 {(request.resolution.afterUrl || request.resolution.evidenceUrl) && (
                   <div>
                     <p className="text-[10px] font-bold uppercase text-slate-500 mb-1">After</p>
-                    <img
-                      src={request.resolution.afterUrl ?? request.resolution.evidenceUrl}
-                      alt=""
-                      className="rounded-lg border w-full max-h-40 object-cover"
+                    <EvidenceUrlPreview
+                      url={request.resolution.afterUrl ?? request.resolution.evidenceUrl!}
+                      label="After evidence"
+                      compact
                     />
                   </div>
                 )}
@@ -312,7 +331,7 @@ function ActionRoleCard({
           {a.evidenceUrl && (
             <div className="mt-2">
               <p className="text-[9px] font-bold uppercase text-slate-500">Evidence</p>
-              <img src={a.evidenceUrl} alt="" className="mt-1 rounded-lg border max-h-32 object-cover" />
+              <EvidenceUrlPreview url={a.evidenceUrl} label="Officer evidence" compact />
             </div>
           )}
         </div>

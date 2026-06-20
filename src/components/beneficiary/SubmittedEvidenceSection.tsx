@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PublicRequest } from "@/types/public-request";
 import { submitterLabel, type TransparencyBucket } from "@/services/public/publicRequestService";
 import { requestBucketLabel } from "@/services/public/slaVisibility";
+import { EvidenceStrip } from "@/components/public/EvidenceMediaTile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Eye, Download, RotateCcw, MapPin, Shield } from "lucide-react";
@@ -98,8 +99,10 @@ export function SubmittedEvidenceSection({ requests, buckets, filterBucket, onFi
                 <td className="p-3 text-xs">{submitterLabel(r.submittedAs)}</td>
                 <td className="p-3 text-xs">
                   {r.evidence.length} file(s)
-                  {r.evidence[0]?.url && (
-                    <img src={r.evidence[0].url} alt="" className="h-8 w-8 rounded mt-1 object-cover border" />
+                  {r.evidence.length > 0 && (
+                    <div className="mt-2">
+                      <EvidenceStrip items={r.evidence} />
+                    </div>
                   )}
                 </td>
                 <td className="p-3 text-[10px]">

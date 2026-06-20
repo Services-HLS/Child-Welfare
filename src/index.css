@@ -80,6 +80,12 @@
   .worker-field {
     @apply text-[#0F172A] w-full max-w-none;
   }
+  .exec-report {
+    @apply -mx-4 sm:-mx-6;
+  }
+  .exec-section-head {
+    letter-spacing: 0.05em;
+  }
   .worker-page {
     width: 100%;
     max-width: none;

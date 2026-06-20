@@ -4,6 +4,8 @@ import { format } from "date-fns";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronRight, ShieldAlert } from "lucide-react";
+import { EvidenceStrip } from "@/components/public/EvidenceMediaTile";
+import { getComplaintEvidence } from "@/lib/complaint-evidence";
 import {
   aiSeverityLabel,
   isPublicSupervisorGrievance,
@@ -89,6 +91,11 @@ export default function PublicGrievanceCenter() {
                 <h2 className="font-bold text-slate-900">{c.title}</h2>
                 <p className="text-xs text-slate-600 mt-1">
                   {c.category.replace(/_/g, " ")} · {c.beneficiaryName} · {format(new Date(c.createdAt), "PP")}
+                  {c.anonymous && (
+                    <span className="ml-2 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-violet-50 text-violet-800 border border-violet-200">
+                      Anonymous
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs mt-1">
                   Priority: <strong>{priorityLabel(c.grievance?.citizenPriority ?? c.priority)}</strong> · AI severity:{" "}
@@ -100,10 +107,13 @@ export default function PublicGrievanceCenter() {
               </span>
             </div>
             {(c.citizenEvidence?.length ?? 0) > 0 && (
-              <p className="text-xs text-emerald-700 mt-2 flex items-center gap-1">
-                <ShieldAlert className="h-3.5 w-3.5" />
-                {c.citizenEvidence!.length} evidence file(s)
-              </p>
+              <div className="mt-2">
+                <p className="text-xs text-emerald-700 flex items-center gap-1 mb-2">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {getComplaintEvidence(c).length} evidence file(s)
+                </p>
+                <EvidenceStrip items={getComplaintEvidence(c)} />
+              </div>
             )}
             <div className="flex flex-wrap gap-1 mt-3">
               <Link to={`/supervisor/grievance/${c.id}`} className="gov-btn-primary text-[10px] py-1.5 px-3">

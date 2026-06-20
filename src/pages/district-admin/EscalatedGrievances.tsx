@@ -1,7 +1,7 @@
 import { useApp } from "@/context/AppContext";
 import { format } from "date-fns";
 import { PublicEvidenceGallery } from "@/components/public/PublicEvidenceGallery";
-import { PublicEvidenceItem } from "@/types/public-request";
+import { getComplaintEvidence } from "@/lib/complaint-evidence";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,14 +28,7 @@ export default function EscalatedGrievances() {
     toast.success(action);
   };
 
-  const evidence: PublicEvidenceItem[] = (active?.grievance?.evidence ?? active?.citizenEvidence ?? []).map((e) => ({
-    id: e.id,
-    type: e.type === "photo" ? "photo" : "document",
-    url: e.url,
-    text: e.text,
-    label: e.label,
-    uploadedAt: e.uploadedAt,
-  }));
+  const evidence = active ? getComplaintEvidence(active) : [];
 
   return (
     <div className="space-y-6 pb-24">

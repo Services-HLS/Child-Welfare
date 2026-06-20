@@ -46,7 +46,10 @@ import AdminCenters from "./pages/admin/AdminCenters.tsx";
 import AdminWorkers from "./pages/admin/AdminWorkers.tsx";
 import AdminAlerts from "./pages/admin/AdminAlerts.tsx";
 import AdminReports from "./pages/admin/AdminReports.tsx";
-import BeneficiaryDashboard from "./pages/beneficiary/BeneficiaryDashboard.tsx";
+import MyGrievances from "./pages/beneficiary/MyGrievances.tsx";
+import MyGrievanceDetail from "./pages/beneficiary/MyGrievanceDetail.tsx";
+import SubmitGrievance from "./pages/beneficiary/SubmitGrievance.tsx";
+import TrackGrievance from "./pages/beneficiary/TrackGrievance.tsx";
 import BeneficiaryFeedback from "./pages/beneficiary/Feedback.tsx";
 import BeneficiaryComplaints from "./pages/beneficiary/Complaints.tsx";
 import BeneficiaryStatus from "./pages/beneficiary/Status.tsx";
@@ -71,6 +74,8 @@ import PublicRequestDetail from "./pages/beneficiary/PublicRequestDetail.tsx";
 import GrievanceActionCenter from "./pages/supervisor/GrievanceActionCenter.tsx";
 import PublicGrievanceCenter from "./pages/supervisor/PublicGrievanceCenter.tsx";
 import SupervisorGrievanceDetail from "./pages/supervisor/SupervisorGrievanceDetail.tsx";
+import AnganwadiAnalytics from "./pages/supervisor/AnganwadiAnalytics.tsx";
+import CenterIntelligenceReportPage from "./pages/supervisor/CenterIntelligenceReport.tsx";
 import MyRequests from "./pages/public/MyRequests.tsx";
 import MyExperiences from "./pages/public/MyExperiences.tsx";
 import ExperienceDetail from "./pages/public/ExperienceDetail.tsx";
@@ -123,7 +128,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
 
             {/* Beneficiary */}
-            <Route path="/beneficiary" element={<Protected role="beneficiary"><BeneficiaryDashboard /></Protected>} />
+            <Route path="/beneficiary" element={<Protected role="beneficiary"><Navigate to="/beneficiary/my-grievances" replace /></Protected>} />
+            <Route path="/beneficiary/my-grievances" element={<Protected role="beneficiary"><MyGrievances /></Protected>} />
+            <Route path="/beneficiary/my-grievances/:id" element={<Protected role="beneficiary"><MyGrievanceDetail /></Protected>} />
+            <Route path="/beneficiary/submit-grievance" element={<Protected role="beneficiary"><SubmitGrievance /></Protected>} />
+            <Route path="/beneficiary/track-grievance" element={<Protected role="beneficiary"><TrackGrievance /></Protected>} />
             <Route path="/beneficiary/feedback" element={<Protected role="beneficiary"><BeneficiaryFeedback /></Protected>} />
             <Route path="/beneficiary/complaints" element={<Protected role="beneficiary"><BeneficiaryComplaints /></Protected>} />
             <Route path="/beneficiary/status" element={<Protected role="beneficiary"><BeneficiaryStatus /></Protected>} />
@@ -133,6 +142,11 @@ const App = () => (
             <Route path="/beneficiary/omnichannel-feedback" element={<Protected role="beneficiary"><OmnichannelFeedback /></Protected>} />
             <Route path="/beneficiary/surveys" element={<Protected role="beneficiary"><BeneficiarySurveys /></Protected>} />
             <Route path="/beneficiary/my-child" element={<Protected role="beneficiary"><MyChild /></Protected>} />
+            <Route path="/beneficiary/my-child/growth" element={<Protected role="beneficiary"><MyChild /></Protected>} />
+            <Route path="/beneficiary/my-child/vaccination" element={<Protected role="beneficiary"><MyChild /></Protected>} />
+            <Route path="/beneficiary/my-child/attendance" element={<Protected role="beneficiary"><MyChild /></Protected>} />
+            <Route path="/beneficiary/my-child/milestones" element={<Protected role="beneficiary"><MyChild /></Protected>} />
+            <Route path="/beneficiary/my-child/health" element={<Protected role="beneficiary"><MyChild /></Protected>} />
             <Route path="/beneficiary/center-timeline" element={<Protected role="beneficiary"><CenterTimelinePage /></Protected>} />
             <Route path="/beneficiary/request/:id" element={<Protected role="beneficiary"><PublicRequestDetail /></Protected>} />
             <Route path="/beneficiary/daily-journey" element={<Protected role="beneficiary"><DailyJourney /></Protected>} />
@@ -180,6 +194,9 @@ const App = () => (
             <Route path="/supervisor/public-grievance-center" element={<Protected role="supervisor"><PublicGrievanceCenter /></Protected>} />
             <Route path="/supervisor/grievance-action-center" element={<Protected role="supervisor"><GrievanceActionCenter /></Protected>} />
             <Route path="/supervisor/grievance/:id" element={<Protected role="supervisor"><SupervisorGrievanceDetail /></Protected>} />
+            <Route path="/supervisor/anganwadi-analytics" element={<Protected role="supervisor"><AnganwadiAnalytics /></Protected>} />
+            <Route path="/supervisor/anganwadi-analytics/:id" element={<Protected role="supervisor"><CenterIntelligenceReportPage /></Protected>} />
+            <Route path="/supervisor/center/:centerId" element={<Protected role="supervisor"><CenterIntelligenceReportPage /></Protected>} />
             <Route path="/supervisor/audit/:id" element={<Protected role="supervisor"><SupervisorAuditDetail /></Protected>} />
             <Route path="/supervisor/alerts" element={<Protected role="supervisor"><Alerts /></Protected>} />
             <Route path="/supervisor/map" element={<Protected role="supervisor"><MapView /></Protected>} />

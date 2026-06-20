@@ -28,40 +28,34 @@ export type GovNavItem = {
   descriptionKey?: string;
   icon: typeof LayoutDashboard;
 };
-export type GovNavSection = { sectionKey: string; items: GovNavItem[] };
+export type GovNavSection = {
+  sectionKey: string;
+  items: GovNavItem[];
+  /** When true, section header toggles visibility of child links */
+  collapsible?: boolean;
+};
 
 export const GOV_NAV: Record<Role, GovNavSection[]> = {
   beneficiary: [
-    { sectionKey: "nav_operations", items: [
-      { to: "/beneficiary", labelKey: "control_room", icon: LayoutDashboard },
-      { to: "/beneficiary/my-child", labelKey: "my_services", icon: Heart },
+    { sectionKey: "nav_feedback", items: [
+      { to: "/beneficiary/my-grievances", labelKey: "my_grievances", icon: FileText },
+      { to: "/beneficiary/submit-grievance", labelKey: "submit_grievance", icon: ShieldCheck },
+      { to: "/beneficiary/track-grievance", labelKey: "track_grievance", icon: MapPin },
+      { to: "/beneficiary/notifications", labelKey: "communication_center", icon: Bell },
+    ]},
+    { sectionKey: "nav_know_your_child", collapsible: true, items: [
+      { to: "/beneficiary/my-child", labelKey: "my_child_progress", icon: Heart },
+      { to: "/beneficiary/my-child/growth", labelKey: "growth_monitoring", icon: Activity },
+      { to: "/beneficiary/nutrition", labelKey: "nutrition", icon: UtensilsCrossed },
+      { to: "/beneficiary/my-child/vaccination", labelKey: "vaccination", icon: GraduationCap },
+      { to: "/beneficiary/my-child/attendance", labelKey: "attendance_records", icon: MapPin },
+      { to: "/beneficiary/my-child/milestones", labelKey: "development_milestones", icon: GraduationCap },
+      { to: "/beneficiary/my-child/health", labelKey: "health_records", icon: Heart },
       { to: "/beneficiary/daily-journey", labelKey: "today_services", icon: Sun },
       { to: "/beneficiary/activities", labelKey: "center_services", icon: Activity },
-      { to: "/beneficiary/nutrition", labelKey: "nutrition", icon: UtensilsCrossed },
       { to: "/beneficiary/center-timeline", labelKey: "center_timeline", icon: Radio },
     ]},
-    { sectionKey: "nav_citizen_feedback", items: [
-      {
-        to: "/beneficiary/feedback",
-        labelKey: "share_experience",
-        descriptionKey: "share_experience_desc",
-        icon: MessageSquare,
-      },
-      {
-        to: "/beneficiary/omnichannel-feedback",
-        labelKey: "report_issue",
-        descriptionKey: "report_issue_desc",
-        icon: ClipboardList,
-      },
-      { to: "/public/my-experiences", labelKey: "my_experiences", icon: Heart },
-      { to: "/public/my-requests", labelKey: "my_requests", icon: ShieldCheck },
-      { to: "/beneficiary/complaints", labelKey: "grievance_center", icon: ShieldCheck },
-      { to: "/beneficiary/status", labelKey: "track_resolution", icon: MapPin },
-      { to: "/beneficiary/surveys", labelKey: "surveys", icon: FileText },
-    ]},
-    { sectionKey: "nav_communication", items: [
-      { to: "/beneficiary/notifications", labelKey: "communication_center", icon: Bell },
-      { to: "/beneficiary/center-health", labelKey: "center_health", icon: Building2 },
+    { sectionKey: "nav_profile_help", items: [
       { to: "/beneficiary/profile", labelKey: "profile", icon: Users },
       { to: "/beneficiary/help", labelKey: "help_support", icon: HelpCircle },
     ]},
@@ -108,6 +102,7 @@ export const GOV_NAV: Record<Role, GovNavSection[]> = {
     ]},
     { sectionKey: "nav_citizen_feedback", items: [
       { to: "/supervisor/public-grievance-center", labelKey: "public_grievance_center", icon: ShieldCheck },
+      { to: "/supervisor/anganwadi-analytics", labelKey: "anganwadi_analytics", icon: BarChart3 },
       { to: "/supervisor/complaints", labelKey: "grievance_monitoring", icon: ShieldCheck },
       { to: "/voice-of-citizen", labelKey: "voice_of_beneficiary", icon: MessageSquare },
     ]},
@@ -169,7 +164,12 @@ export const GOV_NAV: Record<Role, GovNavSection[]> = {
 };
 
 export const ROUTE_META: Record<string, { titleKey: string; descKey: string }> = {
-  "/beneficiary": { titleKey: "citizen_portal", descKey: "citizen_portal_desc" },
+  "/beneficiary": { titleKey: "my_grievances", descKey: "my_grievances_subtitle" },
+  "/beneficiary/my-grievances": { titleKey: "my_grievances", descKey: "my_grievances_subtitle" },
+  "/beneficiary/my-grievances/:id": { titleKey: "my_grievances", descKey: "my_grievances_subtitle" },
+  "/beneficiary/submit-grievance": { titleKey: "submit_grievance", descKey: "submit_grievance_subtitle" },
+  "/beneficiary/track-grievance": { titleKey: "track_grievance", descKey: "track_grievance_card_desc" },
+  "/beneficiary/profile": { titleKey: "public_profile", descKey: "public_profile_subtitle" },
   "/worker": { titleKey: "daily_operations", descKey: "daily_operations_desc" },
   "/worker/dashboard": { titleKey: "daily_operations_console", descKey: "daily_operations_desc" },
   "/supervisor": { titleKey: "monitoring_command", descKey: "monitoring_command_desc" },

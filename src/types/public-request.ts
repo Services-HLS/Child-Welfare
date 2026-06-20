@@ -1,5 +1,5 @@
 import { FeedbackChannel } from "./feedback-channels";
-import { ComplaintRecord, ComplaintStatus, Role } from "./platform";
+import { ComplaintRecord, ComplaintStatus, Lang, Role } from "./platform";
 import { PublicFeedbackSubmitterType } from "./public-context";
 import { FeedbackEntry } from "./platform";
 import { OmnichannelInput } from "./feedback-channels";
@@ -11,6 +11,14 @@ export interface PublicEvidenceItem {
   text?: string;
   label?: string;
   uploadedAt: string;
+  /** Language detected in OCR-extracted document text */
+  ocrLanguage?: Lang;
+  ocrLanguageLabel?: string;
+  ocrSource?: "plain" | "pdf" | "docx" | "image" | "fallback";
+  ocrFileKind?: "document" | "image";
+  ocrFileName?: string;
+  ocrConfidence?: number;
+  ocrCharacterCount?: number;
   aiStatus?: string;
   geo?: {
     matchPercent: number;

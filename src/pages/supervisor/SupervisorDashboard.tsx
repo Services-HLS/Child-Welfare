@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { StatCard } from "@/components/app/StatCard";
 import { AEIDashboardStrip } from "@/components/unified/AEIDashboardStrip";
 import { ClassroomDashboardStrip } from "@/components/classroom";
+import { SupervisorGrievanceCommand } from "@/components/supervisor/SupervisorGrievanceCommand";
 import { 
   AreaChart, 
   Area, 
@@ -58,6 +59,8 @@ export default function SupervisorDashboard() {
 
   return (
     <div className="space-y-6">
+      <SupervisorGrievanceCommand />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-6 dark:border-slate-800">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">

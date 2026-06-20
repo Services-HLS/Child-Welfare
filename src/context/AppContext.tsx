@@ -3,6 +3,7 @@ import { translations, TKey } from "@/lib/i18n";
 import { mockActivities, ActivityLog } from "@/data/mockData";
 import { Role } from "@/types/platform";
 import { mockComplaints, mockFeedback, mockPlatformNotifications } from "@/data/mockGrievances";
+import { mergeDemoGrievances } from "@/data/demoGrievances";
 import { mockSessionRecordings } from "@/data/mockSessions";
 import {
   AppUser,
@@ -33,6 +34,7 @@ import { ScenarioPayload } from "@/services/demo/scenarioGenerator";
 import { authenticate, loadStoredUser, persistUser } from "@/services/auth/session";
 import { processFeedbackWithAI } from "@/services/ai";
 import { analyzePublicGrievance, classifyGrievance } from "@/services/ai/grievance-engine";
+import { generateInvestigationReport } from "@/services/ai/investigation-engine";
 import { PublicGrievancePriority } from "@/types/grievance";
 import { analyzePreschoolSession } from "@/services/ai/session-analysis";
 import { processChannelIntake, ChannelIntakePayload } from "@/services/feedback/intake";
@@ -132,6 +134,7 @@ interface AppCtx {
     aiAnalysis: import("@/types/grievance").GrievanceAIAnalysis;
     lang: Lang;
   }) => Promise<ComplaintRecord>;
+  submitPublicGrievance: (input: import("@/components/beneficiary/SubmitGrievanceForm").PublicGrievancePayload) => Promise<ComplaintRecord>;
   submitOmnichannel: (payload: ChannelIntakePayload) => Promise<FeedbackEntry>;
   complaints: ComplaintRecord[];
   updateComplaint: (id: string, updates: Partial<ComplaintRecord>) => void;
@@ -222,11 +225,19 @@ function createComplaintFromText(
     lang?: import("@/types/platform").Lang;
     consentGiven?: boolean;
     aiAnalysis?: import("@/types/grievance").GrievanceAIAnalysis;
+    customTitle?: string;
+    customCategory?: ComplaintCategory;
+    village?: string;
+    mandal?: string;
+    registeredMobile?: string;
+    anonymous?: boolean;
+    grievanceId?: string;
   },
   channel: FeedbackChannel,
   feedbackId: string
 ): ComplaintRecord {
   const g = classifyGrievance(entry.text, entry.rating, channel);
+  const category = entry.customCategory ?? g.category;
   const ai = entry.aiAnalysis ?? analyzePublicGrievance(entry.text, entry.rating, channel, entry.lang ?? "en");
   const slaDue = new Date(Date.now() + g.slaHours * 3600_000).toISOString();
   const evidence = entry.citizenEvidence ?? [];
@@ -239,16 +250,21 @@ function createComplaintFromText(
       timestamp: new Date().toISOString(),
     },
   ];
-  return {
-    id: `CMP-${Date.now().toString().slice(-6)}`,
+  const id = entry.grievanceId ?? `GRV-${Date.now().toString().slice(-6)}`;
+  const draft: ComplaintRecord = {
+    id,
     feedbackId,
     beneficiaryId: entry.beneficiaryId,
-    beneficiaryName: entry.beneficiaryName,
+    beneficiaryName: entry.anonymous ? "Anonymous Citizen" : entry.beneficiaryName,
+    registeredMobile: entry.anonymous ? undefined : entry.registeredMobile,
+    village: entry.village,
+    mandal: entry.mandal,
+    anonymous: entry.anonymous,
     centerId: entry.centerId,
     centerName: entry.centerName,
     district: entry.district,
-    category: g.category,
-    title: `Grievance: ${g.category.replace(/_/g, " ")}`,
+    category,
+    title: entry.customTitle ?? `Grievance: ${category.replace(/_/g, " ")}`,
     description: entry.text,
     status: "ai_processing",
     urgencyScore: g.urgencyScore,
@@ -260,17 +276,17 @@ function createComplaintFromText(
     severity: g.severity,
     routingPath: g.routingPath,
     slaHours: g.slaHours,
-    aiClassification: { category: g.category, urgency: g.urgencyScore, summary: g.summary },
+    aiClassification: { category, urgency: g.urgencyScore, summary: g.summary },
     submittedAs: entry.submittedAs,
-    priority: entry.priority,
+    priority: entry.priority ?? entry.citizenPriority,
     citizenEvidence: evidence,
     grievanceActions: actions,
     supervisorId: "SUP-TPT-01",
-    supervisorName: "Supervisor · Tirupati",
+    supervisorName: "Ravi Kumar · Supervisor",
     grievance: {
       ownerRole: "supervisor",
       ownerId: "SUP-TPT-01",
-      ownerName: "Supervisor · Tirupati",
+      ownerName: "Ravi Kumar · Supervisor",
       evidence,
       aiAnalysis: ai,
       actions,
@@ -278,20 +294,25 @@ function createComplaintFromText(
       citizenPriority: entry.citizenPriority,
     },
   };
+  return { ...draft, investigationReport: generateInvestigationReport(draft) };
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() => loadStoredUser());
   const [lang, setLangState] = useState<Lang>(() => {
+    const u = loadStoredUser();
+    if (u?.languagePreference && ["en", "te", "hi"].includes(u.languagePreference)) {
+      return u.languagePreference;
+    }
     const stored = localStorage.getItem(storageKeys.lang) ?? localStorage.getItem("awai.lang");
-    return (stored as Lang) || "en";
+    return (stored === "te" || stored === "hi" || stored === "en" ? stored : "en") as Lang;
   });
   const [online, setOnline] = useState(true);
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [activities, setActivities] = useState<ActivityLog[]>(mockActivities);
   const [feedback, setFeedback] = useState<FeedbackEntry[]>(mockFeedback);
   const [citizenExperiences, setCitizenExperiences] = useState<CitizenExperienceRecord[]>([]);
-  const [complaints, setComplaints] = useState<ComplaintRecord[]>(mockComplaints);
+  const [complaints, setComplaints] = useState<ComplaintRecord[]>(() => mergeDemoGrievances(mockComplaints));
   const [notifications, setNotifications] = useState<PlatformNotification[]>(mockPlatformNotifications);
   const [sessions, setSessions] = useState<SessionRecording[]>(mockSessionRecordings);
   const [trainingRecommendations, setTrainingRecommendations] = useState<TrainingRecommendation[]>([]);
@@ -352,7 +373,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [sessions.length]);
 
   useEffect(() => { persistUser(user); }, [user]);
-  useEffect(() => { lsSet(storageKeys.lang, lang); localStorage.setItem("awai.lang", lang); }, [lang]);
+  useEffect(() => { lsSet(storageKeys.lang, lang); localStorage.setItem("awai.lang", lang); document.documentElement.lang = lang; }, [lang]);
   useEffect(() => { saveActivities(activities); }, [activities]);
   useEffect(() => { saveFeedback(feedback); }, [feedback]);
   useEffect(() => { saveCitizenExperiences(citizenExperiences); }, [citizenExperiences]);
@@ -365,10 +386,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (role: Role, credentials?: { phone?: string; password?: string }) => {
     const u = await authenticate(role, credentials);
-    setLangState("en");
-    lsSet(storageKeys.lang, "en");
-    localStorage.setItem("awai.lang", "en");
-    setUser({ ...u, languagePreference: "en" });
+    const stored = localStorage.getItem(storageKeys.lang) ?? localStorage.getItem("awai.lang");
+    const preferred = (stored === "te" || stored === "hi" || stored === "en" ? stored : u.languagePreference ?? "en") as Lang;
+    setLangState(preferred);
+    lsSet(storageKeys.lang, preferred);
+    localStorage.setItem("awai.lang", preferred);
+    setUser({ ...u, languagePreference: preferred });
   }, []);
 
   const logout = () => {
@@ -633,6 +656,66 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: "Your issue is under supervisor review",
       body: `Grievance ${cmp.id} — AI analysis complete. Track resolution and uploaded proof in My Requests.`,
       actionUrl: `/beneficiary/request/${cmp.id}`,
+    });
+    return cmp;
+  };
+
+  const submitPublicGrievance = async (
+    input: import("@/components/beneficiary/SubmitGrievanceForm").PublicGrievancePayload
+  ): Promise<ComplaintRecord> => {
+    const rating = input.priority === "critical" ? 1 : input.priority === "high" ? 2 : input.priority === "medium" ? 3 : 4;
+    const fullText = input.description;
+    const fbId = `FB-${Date.now()}`;
+    const beneficiaryId = input.anonymous
+      ? `PUB-ANON-${Date.now().toString().slice(-6)}`
+      : user?.id ?? `PUB-${input.registeredMobile.slice(-4)}`;
+    const beneficiaryName = input.anonymous
+      ? "Anonymous Citizen"
+      : input.beneficiaryName.trim() || `Citizen · ${input.registeredMobile}`;
+    const ai = analyzePublicGrievance(fullText, rating, "mobile_app", lang);
+    const evidence = [...input.evidence];
+    const cmp = createComplaintFromText(
+      {
+        beneficiaryId,
+        beneficiaryName,
+        centerId: input.centerId,
+        centerName: input.centerName,
+        district: input.district,
+        text: fullText,
+        rating,
+        submittedAs: input.submittedAs,
+        priority: input.priority,
+        citizenEvidence: evidence,
+        citizenPriority: input.priority,
+        consentGiven: input.consent,
+        aiAnalysis: ai,
+        customTitle: input.title,
+        customCategory: input.category,
+        village: input.village,
+        mandal: input.mandal,
+        registeredMobile: input.anonymous ? undefined : input.registeredMobile,
+        anonymous: input.anonymous,
+        lang,
+      },
+      "mobile_app",
+      fbId
+    );
+    registerComplaint(cmp, beneficiaryId);
+    addNotification({
+      userId: beneficiaryId,
+      role: "beneficiary",
+      channel: "in_app",
+      title: "Grievance submitted successfully",
+      body: `${cmp.id} — Assigned for AI Verification and Supervisor Investigation. Expected resolution: 48 hours.`,
+      actionUrl: `/beneficiary/track-grievance`,
+    });
+    addNotification({
+      userId: "SUP-TPT-01",
+      role: "supervisor",
+      channel: "in_app",
+      title: "New public grievance",
+      body: `${cmp.id} — ${input.title} · ${input.category.replace(/_/g, " ")}`,
+      actionUrl: `/supervisor/grievance/${cmp.id}`,
     });
     return cmp;
   };
@@ -1044,6 +1127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       submitFeedback,
       submitShareExperience,
       submitReportIssue,
+      submitPublicGrievance,
       submitOmnichannel,
       complaints, updateComplaint, advanceComplaint, addGrievanceAction, escalatePublicGrievance,
       notifications, addNotification, markNotificationRead,

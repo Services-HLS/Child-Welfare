@@ -1,14 +1,14 @@
-import { ReactNode, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { ReactNode, useState, useEffect } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { normalizeRole } from "@/lib/rolePaths";
-import { GOV_NAV, GovNavItem } from "@/lib/govNav";
+import { GOV_NAV, GovNavItem, GovNavSection } from "@/lib/govNav";
 import { GovernmentHeader } from "@/components/gov/GovernmentHeader";
 import { GovernmentPageFrame } from "@/components/gov/GovernmentPageFrame";
 import { TransparencyProvider } from "@/components/gov/TransparencyProvider";
 import { TransparencyDrawer } from "@/components/gov/TransparencyDrawer";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, ChevronUp, X } from "lucide-react";
 import { TKey } from "@/lib/i18n";
 import { WorkerFlowProvider } from "@/context/worker/WorkerFlowContext";
 import { TrainingProgressProvider } from "@/context/worker/TrainingProgressContext";
@@ -30,12 +30,11 @@ function SidebarNavLink({
   onNavigate?: () => void;
 }) {
   const { to, icon: Icon } = item;
-  const end = to.split("/").filter(Boolean).length <= 2;
 
   return (
     <NavLink
       to={to}
-      end={end}
+      end
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
@@ -95,34 +94,75 @@ function SidebarNav({
   collapsed,
   onItemClick,
 }: {
-  sections: typeof GOV_NAV.beneficiary;
+  sections: GovNavSection[];
   t: (k: TKey) => string;
   collapsed?: boolean;
   onItemClick?: () => void;
 }) {
+  const { pathname } = useLocation();
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      for (const sec of sections) {
+        if (sec.collapsible && sec.items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))) {
+          next[sec.sectionKey] = true;
+        }
+      }
+      return next;
+    });
+  }, [pathname, sections]);
+
+  const toggleSection = (key: string) => {
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
     <nav className={cn("space-y-4", collapsed ? "px-2" : "px-3")}>
-      {sections.map((sec) => (
-        <div key={sec.sectionKey}>
-          {!collapsed && (
-            <div className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-white/10 pb-1.5">
-              {t(sec.sectionKey as TKey)}
-            </div>
-          )}
-          <div className="space-y-0.5">
-            {sec.items.map((item) => (
-              <SidebarNavLink
-                key={item.to}
-                item={item}
-                label={t(item.labelKey as TKey)}
-                description={item.descriptionKey ? t(item.descriptionKey as TKey) : undefined}
-                collapsed={collapsed}
-                onNavigate={onItemClick}
-              />
-            ))}
+      {sections.map((sec) => {
+        const isOpen = openSections[sec.sectionKey] ?? !sec.collapsible;
+        const sectionActive = sec.items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
+
+        return (
+          <div key={sec.sectionKey}>
+            {!collapsed && (
+              sec.collapsible ? (
+                <button
+                  type="button"
+                  onClick={() => toggleSection(sec.sectionKey)}
+                  className={cn(
+                    "mb-1.5 flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-widest border-b border-white/10 pb-1.5 transition-colors",
+                    sectionActive ? "text-blue-300" : "text-slate-500 hover:text-white hover:bg-white/5"
+                  )}
+                  aria-expanded={isOpen}
+                >
+                  <span>{t(sec.sectionKey as TKey)}</span>
+                  {isOpen ? <ChevronUp className="h-3.5 w-3.5 shrink-0" /> : <ChevronDown className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              ) : (
+                <div className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 border-b border-white/10 pb-1.5">
+                  {t(sec.sectionKey as TKey)}
+                </div>
+              )
+            )}
+            {(!sec.collapsible || isOpen || collapsed) && (
+              <div className={cn("space-y-0.5", sec.collapsible && !collapsed && "ml-1 border-l border-white/10 pl-2")}>
+                {sec.items.map((item) => (
+                  <SidebarNavLink
+                    key={`${sec.sectionKey}-${item.labelKey}-${item.to}`}
+                    item={item}
+                    label={t(item.labelKey as TKey)}
+                    description={item.descriptionKey ? t(item.descriptionKey as TKey) : undefined}
+                    collapsed={collapsed}
+                    onNavigate={onItemClick}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </nav>
   );
 }
@@ -163,14 +203,14 @@ export function AppShell({ children }: { children: ReactNode }) {
                   "border-white/10 text-slate-500 hover:bg-white/5 hover:text-white",
                   isCollapsed ? "px-2" : "gap-2 px-3"
                 )}
-                title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                title={isCollapsed ? t("expand_sidebar") : t("collapse_sidebar")}
               >
                 {isCollapsed ? (
                   <ChevronRight className="h-4 w-4" />
                 ) : (
                   <>
                     <ChevronLeft className="h-4 w-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Collapse</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{t("collapse_sidebar")}</span>
                   </>
                 )}
               </button>
@@ -188,7 +228,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             )}
           >
             <div className="p-4 sm:p-6 lg:p-8 w-full max-w-none">
-              <GovernmentPageFrame hideBreadcrumb={role === "worker"}>
+              <GovernmentPageFrame>
                 {role === "worker" ? (
                   <WorkerFlowProvider>
                     <TrainingProgressProvider>{children}</TrainingProgressProvider>

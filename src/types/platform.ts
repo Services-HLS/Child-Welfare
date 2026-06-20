@@ -221,6 +221,12 @@ export interface ComplaintRecord {
   resolutionBeforeUrl?: string;
   resolutionAfterUrl?: string;
   resolutionDocuments?: string[];
+  /** Public grievance intake — per-submission only */
+  registeredMobile?: string;
+  village?: string;
+  mandal?: string;
+  anonymous?: boolean;
+  investigationReport?: import("./investigation").GrievanceInvestigationReport;
 }
 
 export interface PlatformNotification {

@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { AIExplainabilityPanel } from "@/components/explainability/AIExplainabilityPanel";
 import { explainGrievance } from "@/services/ai/explainability";
+import { PublicEvidenceGallery } from "@/components/public/PublicEvidenceGallery";
+import { getComplaintEvidence } from "@/lib/complaint-evidence";
 
 export function ComplaintCard({
   complaint,
@@ -16,6 +18,7 @@ export function ComplaintCard({
   actions?: React.ReactNode;
 }) {
   const overdue = new Date(complaint.slaDueAt) < new Date() && complaint.status !== "closed";
+  const evidence = getComplaintEvidence(complaint);
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -34,6 +37,12 @@ export function ComplaintCard({
         </span>
       </div>
       <p className="text-xs text-slate-600 mt-3 line-clamp-2">{complaint.description}</p>
+      {evidence.length > 0 && (
+        <div className="mt-3">
+          <p className="text-[10px] font-bold uppercase text-slate-500 mb-2">Submitted Evidence</p>
+          <PublicEvidenceGallery items={evidence} />
+        </div>
+      )}
       {complaint.aiClassification && (
         <div className="mt-3">
           <AIExplainabilityPanel explanation={explainGrievance(complaint)} />

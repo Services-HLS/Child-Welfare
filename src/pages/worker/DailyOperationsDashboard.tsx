@@ -1,7 +1,6 @@
 import { useApp } from "@/context/AppContext";
 import { useWorkerFlow } from "@/context/worker/WorkerFlowContext";
 import { WorkerFieldLayout, WorkerSummaryCard, WorkerQuickBtn } from "@/components/worker/WorkerFieldLayout";
-import { DayTimeline as DayTimelineComponent } from "@/components/worker/DayTimeline";
 import { format } from "date-fns";
 import {
   LogIn,
@@ -9,14 +8,13 @@ import {
   ClipboardList,
   GraduationCap,
   RefreshCw,
-  ListChecks,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export default function DailyOperationsDashboard() {
   const { user, t, online } = useApp();
-  const { progress, uploadQueue, unreadAlerts } = useWorkerFlow();
+  const { progress, uploadQueue } = useWorkerFlow();
   const m = progress.metrics;
   const pendingSync = uploadQueue.filter((q) => q.status !== "verified").length;
 
@@ -69,17 +67,6 @@ export default function DailyOperationsDashboard() {
           <WorkerQuickBtn label={t("continue_training")} href="/worker/training" icon={GraduationCap} />
           <WorkerQuickBtn label={t("sync_offline")} href="/settings/sync" icon={RefreshCw} />
         </div>
-      </section>
-
-      <section className="mt-4 worker-card border border-slate-200 bg-white p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold uppercase text-slate-600">{t("full_day_timeline")}</h3>
-          <Link to="/worker/my-day" className="text-[10px] font-bold text-[#1e40af] flex items-center gap-1">
-            <ListChecks className="h-3.5 w-3.5" /> {t("my_day")}
-            {unreadAlerts > 0 && <span className="bg-rose-500 text-white px-1.5 rounded-full">{unreadAlerts}</span>}
-          </Link>
-        </div>
-        <DayTimelineComponent steps={progress.steps} />
       </section>
 
       {!online && (

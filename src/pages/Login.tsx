@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { LangToggle } from "@/components/app/LangToggle";
-import { AccessibilityControls } from "@/components/gov/AccessibilityControls";
 import { GOV_BRAND } from "@/lib/govBranding";
 import { ArrowRight, Lock, Phone, CheckCircle2, Shield, BarChart3 } from "lucide-react";
 import { Role } from "@/types/platform";
@@ -29,10 +28,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [phone, setPhone] = useState("9876543210");
   const [password, setPassword] = useState("demo1234");
-
-  useEffect(() => {
-    if (!user) setLang("en");
-  }, [user, setLang]);
 
   useEffect(() => {
     const prevHtml = document.documentElement.style.overflow;
@@ -139,9 +134,6 @@ export default function Login() {
           <div className="login-gov-form-toolbar shrink-0 flex items-center justify-end gap-2 px-4 py-2 border-b border-slate-300/80 bg-white/60">
             <span className="mr-auto text-[9px] font-bold uppercase text-slate-500 md:hidden">{GOV_BRAND.title}</span>
             <LangToggle variant="light" />
-            <div className="login-gov-toolbar-a11y">
-              <AccessibilityControls variant="login" />
-            </div>
           </div>
 
           <div className="flex-1 min-h-0 flex items-center justify-center px-4 py-3">

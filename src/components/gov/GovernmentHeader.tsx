@@ -1,10 +1,9 @@
+import { Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { LangToggle } from "@/components/app/LangToggle";
-import { SyncIndicator } from "@/components/app/SyncIndicator";
-import { AccessibilityControls } from "./AccessibilityControls";
-import { useTransparency } from "./TransparencyProvider";
-import { GOV_BRAND, getEnvironmentLabel } from "@/lib/govBranding";
-import { LogOut, UserCircle, FileSearch, Menu } from "lucide-react";
+import { GOV_BRAND } from "@/lib/govBranding";
+import { getNotificationPath } from "@/lib/rolePaths";
+import { LogOut, UserCircle, Menu, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function GovernmentHeader({
@@ -14,10 +13,7 @@ export function GovernmentHeader({
   onMenuToggle?: () => void;
   showMenu?: boolean;
 }) {
-  const { user, logout, t, demoModeActive } = useApp();
-  const { toggle } = useTransparency();
-  const env = getEnvironmentLabel(demoModeActive);
-  const district = user?.district ?? user?.centerName?.split(" ")[0] ?? "Andhra Pradesh";
+  const { user, logout, t } = useApp();
 
   return (
     <header className="fixed top-0 z-50 w-full border-b-2 border-[#1e3a5f] bg-[#0F172A] text-white">
@@ -41,22 +37,17 @@ export function GovernmentHeader({
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 text-[10px]">
-          <span className="hidden md:inline rounded border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 font-semibold uppercase text-amber-100">
-            {env}
-          </span>
-          <span className="hidden lg:inline text-white/70 font-medium">District: <strong className="text-white">{district}</strong></span>
-          <SyncIndicator />
           <LangToggle variant="gov" />
-          <AccessibilityControls variant="header" />
-          <button
-            type="button"
-            onClick={toggle}
-            className="hidden sm:flex items-center gap-1 rounded border border-white/20 px-2 py-1 font-semibold hover:bg-white/10"
-          >
-            <FileSearch className="h-3.5 w-3.5" /> Transparency
-          </button>
           {user && (
             <>
+              <Link
+                to={getNotificationPath(user.role)}
+                className="flex h-8 w-8 items-center justify-center rounded border border-white/20 hover:bg-white/10"
+                title={t("communication_center")}
+                aria-label={t("communication_center")}
+              >
+                <Bell className="h-4 w-4" />
+              </Link>
               <div className="hidden md:block text-right leading-tight">
                 <div className="text-[11px] font-semibold">{user.name}</div>
                 <div className="text-[10px] text-white/60 capitalize">{t(user.role as never)}</div>
@@ -64,7 +55,13 @@ export function GovernmentHeader({
               <div className="flex h-8 w-8 items-center justify-center border border-white/20 bg-white/5">
                 <UserCircle className="h-5 w-5 text-white/70" />
               </div>
-              <button type="button" onClick={logout} className={cn("p-1.5 rounded border border-white/15 hover:bg-red-950/40 hover:border-red-400/40")} title={t("logout")}>
+              <button
+                type="button"
+                onClick={logout}
+                className={cn("p-1.5 rounded border border-white/15 hover:bg-red-950/40 hover:border-red-400/40")}
+                title={t("logout")}
+                aria-label={t("logout")}
+              >
                 <LogOut className="h-4 w-4" />
               </button>
             </>
