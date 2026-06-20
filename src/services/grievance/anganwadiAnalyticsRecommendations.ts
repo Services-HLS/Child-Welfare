@@ -137,3 +137,158 @@ export function buildDistrictAnalyticsRecommendations(
     },
   ];
 }
+
+/** Center-specific AI recommendations from all grievances at one Anganwadi center. */
+export function buildCenterAnalyticsRecommendations(
+  complaints: ComplaintRecord[],
+  centerId: string
+): AIRecommendationCardData[] {
+  const center = mockCenters.find((c) => c.id === centerId);
+  const centerName = center?.name ?? centerId;
+  const all = complaints.filter((c) => c.centerId === centerId);
+  const pending = all.filter((c) => c.status !== "closed").length;
+  const resolved = all.filter((c) => c.status === "closed").length;
+  const highPriority = countBy(all, (c) => c.priority === "critical" || c.priority === "high" || (c.urgencyScore ?? 0) > 0.7);
+  const nutrition = countBy(all, (c) => c.category.includes("nutrition") || c.category === "hot_cooked_meals");
+  const infrastructure = countBy(all, (c) => c.category === "infrastructure");
+  const water = countBy(all, (c) => c.category === "drinking_water");
+  const conduct = countBy(all, (c) => c.category === "worker_behavior");
+  const education = countBy(all, (c) => c.category === "education" || c.category.includes("preschool"));
+  const anonymous = countBy(all, (c) => c.anonymous || c.beneficiaryName === "Anonymous Citizen");
+
+  if (all.length === 0) {
+    return [
+      {
+        id: `${centerId}-baseline-1`,
+        recommendation: "Baseline Monitoring & Preventive Compliance Audit",
+        reason: `No grievances recorded yet at ${centerName} — establish preventive oversight.`,
+        fullExplanation: `Anganwadi Analytics found no citizen grievances for ${centerName}. AI recommends a baseline compliance audit: nutrition stock verification (₹2,800), water quality check (₹3,200), and parent feedback circle (₹800). This prevents first-time escalations and maintains trust before issues arise.`,
+        generatedFrom: ["Center registry", "Compliance score", "Preventive analytics model"],
+        expectedImpact: "Prevent first grievances · Maintain center health score",
+        officer: "Supervisor · Tirupati Block",
+        completion: "14 Days",
+        priority: "medium",
+        complaintReduction: "Preventive",
+        welfareImprovement: "12%",
+        satisfactionImprovement: "+10%",
+        confidenceScore: 82,
+        estimatedBudget: "₹6,800",
+      },
+    ];
+  }
+
+  return [
+    {
+      id: `${centerId}-rec-1`,
+      recommendation: nutrition > 0 ? "Emergency Nutrition Replenishment at Center" : "Nutrition Stock Compliance Review",
+      reason:
+        nutrition > 0
+          ? `${nutrition} of ${all.length} grievance(s) at ${centerName} relate to nutrition or meals.`
+          : `Proactive nutrition audit recommended based on ${all.length} grievance(s) analysed at this center.`,
+      fullExplanation: `AI analysed all ${all.length} grievance(s) submitted for ${centerName}. ${nutrition} case(s) cite missing meals, ration gaps, or egg distribution failures. Recommended action: emergency ration replenishment (₹28,500), weekly stock register audit (₹2,800), and supervisor verification visit (₹750). Expected: 40% reduction in nutrition complaints at this center within 30 days and measurable improvement in child nutrition indicators.`,
+      generatedFrom: [`${all.length} center grievances`, "Nutrition category breakdown", "Citizen photo evidence", "Stock ledger"],
+      expectedImpact: nutrition > 0 ? `Resolve ${nutrition} nutrition grievance(s) · 40% complaint drop` : "Prevent nutrition escalations",
+      officer: "District Nutrition Officer · WDCW",
+      completion: "7 Days",
+      priority: nutrition > 0 ? "critical" : "medium",
+      complaintReduction: nutrition > 0 ? "40%" : "20%",
+      welfareImprovement: nutrition > 0 ? "High" : "Medium",
+      satisfactionImprovement: nutrition > 0 ? "+22%" : "+12%",
+      confidenceScore: nutrition > 0 ? 90 : 82,
+      estimatedBudget: nutrition > 0 ? "₹32,050" : "₹2,800",
+    },
+    {
+      id: `${centerId}-rec-2`,
+      recommendation: pending > 0 ? "Supervisor Resolution Sprint for Pending Cases" : "Maintain Resolution SLA Compliance",
+      reason:
+        pending > 0
+          ? `${pending} pending grievance(s) at ${centerName} — ${highPriority} marked high or critical.`
+          : `All ${resolved} grievance(s) resolved — maintain SLA compliance at ${centerName}.`,
+      fullExplanation: `At ${centerName}, ${pending} grievance(s) remain open of ${all.length} total submissions. AI SLA modelling recommends a 14-day resolution sprint: oldest cases first, mandatory beneficiary callbacks within 24 hours (₹0), and two extra supervisor visits (₹1,500). ${highPriority} high-priority case(s) require immediate assignment. Target: 40% backlog reduction at this center.`,
+      generatedFrom: ["Pending vs resolved ratio", "SLA breach model", "Center grievance register"],
+      expectedImpact: pending > 0 ? `Clear ${pending} pending case(s) · 40% backlog reduction` : "Sustain resolution performance",
+      officer: "Supervisor · Tirupati Block",
+      completion: "14 Days",
+      priority: pending > 2 ? "high" : "medium",
+      complaintReduction: pending > 0 ? "40%" : "10%",
+      welfareImprovement: "High",
+      satisfactionImprovement: "+18%",
+      confidenceScore: 86,
+      estimatedBudget: pending > 0 ? "₹1,500" : "₹0",
+    },
+    {
+      id: `${centerId}-rec-3`,
+      recommendation: infrastructure > 0 ? "Infrastructure Safety Repair at Center" : "Pre-Monsoon Infrastructure Inspection",
+      reason:
+        infrastructure > 0
+          ? `${infrastructure} infrastructure grievance(s) at ${centerName} — structural safety risk.`
+          : "Preventive inspection before monsoon season at this center.",
+      fullExplanation: `${infrastructure > 0 ? `${infrastructure} grievances cite roof damage, leaking classrooms, or unsafe buildings at ${centerName}.` : `Analytics predict infrastructure complaint spike during monsoon at ${centerName}.`} Engineering assessment (₹45,000 if damage confirmed), temporary roof covering (₹18,000), and maintenance register update recommended based on all ${all.length} grievances analysed.`,
+      generatedFrom: ["Infrastructure grievances at center", "Photo evidence", "Monsoon risk forecast"],
+      expectedImpact: infrastructure > 0 ? "Prevent safety incidents · 55% fewer infrastructure complaints" : "Prevent monsoon surge",
+      officer: "District Engineering · WDCW",
+      completion: infrastructure > 0 ? "10 Days" : "21 Days",
+      priority: infrastructure > 0 ? "critical" : "medium",
+      complaintReduction: infrastructure > 0 ? "55%" : "24%",
+      welfareImprovement: infrastructure > 0 ? "32%" : "14%",
+      satisfactionImprovement: infrastructure > 0 ? "+26%" : "+12%",
+      confidenceScore: infrastructure > 0 ? 91 : 80,
+      estimatedBudget: infrastructure > 0 ? "₹63,000" : "₹7,200",
+    },
+    {
+      id: `${centerId}-rec-4`,
+      recommendation: water > 0 ? "Safe Water Emergency Protocol at Center" : "Quarterly Water Quality Testing",
+      reason:
+        water > 0
+          ? `${water} drinking water grievance(s) at ${centerName} — child health risk.`
+          : "Proactive water testing at this center based on grievance history.",
+      fullExplanation: `${water > 0 ? `${water} grievances report contaminated or foul water at ${centerName} with child health symptoms.` : `Water issues remain a latent risk at ${centerName} based on ${all.length} analysed grievances.`} Emergency tanker (₹8,500), NABL lab testing (₹3,200), RO unit if needed (₹22,000).`,
+      generatedFrom: ["Water category grievances", "Health symptom analysis", "Center water facility registry"],
+      expectedImpact: water > 0 ? "Eliminate unsafe water · Protect child health" : "Prevent water escalations",
+      officer: "District Water & Sanitation",
+      completion: water > 0 ? "5 Days" : "30 Days",
+      priority: water > 0 ? "critical" : "medium",
+      complaintReduction: water > 0 ? "72%" : "28%",
+      welfareImprovement: water > 0 ? "38%" : "16%",
+      satisfactionImprovement: water > 0 ? "+32%" : "+16%",
+      confidenceScore: water > 0 ? 92 : 83,
+      estimatedBudget: water > 0 ? "₹33,700" : "₹3,200",
+    },
+    {
+      id: `${centerId}-rec-5`,
+      recommendation:
+        conduct > 0
+          ? "Worker Conduct & Service Quality Intervention"
+          : education > 0
+            ? "Preschool Session Delivery Improvement"
+            : anonymous > 0
+              ? "Anonymous Grievance Verification & Trust Outreach"
+              : "Beneficiary Trust & Transparency Drive",
+      reason:
+        conduct > 0
+          ? `${conduct} worker conduct grievance(s) at ${centerName} affecting parent trust.`
+          : education > 0
+            ? `${education} education grievance(s) at ${centerName} — session delivery gaps.`
+            : anonymous > 0
+              ? `${anonymous} anonymous submission(s) at ${centerName} require extra verification.`
+              : `${all.length} grievance(s) analysed — proactive trust-building recommended.`,
+      fullExplanation: conduct > 0
+        ? `${conduct} conduct grievances at ${centerName} from ${all.length} total submissions. Supervisor counselling (₹0), sensitivity training (₹3,500), and unannounced monitoring (₹1,500/month) projected to reduce conduct complaints by 45%.`
+        : education > 0
+          ? `${education} education grievances cite missed preschool sessions at ${centerName}. ECCE coordinator visit (₹3,500) and session observation audit (₹1,500) will restore daily delivery.`
+          : anonymous > 0
+            ? `${anonymous} anonymous grievance(s) at ${centerName} require verification before field action. Supervisor outreach and evidence cross-check (₹1,200) while protecting citizen privacy.`
+            : `Analysis of all ${all.length} grievances at ${centerName} shows trust improves with visible resolution updates. SMS status alerts (₹1,200) and monthly open day (₹800) recommended.`,
+      generatedFrom: ["Conduct & education grievances", "Anonymous submission patterns", "Sentiment analysis", "Repeat submission data"],
+      expectedImpact: conduct > 0 ? "Restore parent trust · 45% fewer conduct complaints" : education > 0 ? "Restore daily preschool" : "Improve verification & trust",
+      officer: conduct > 0 ? "District Training Unit · WDCW" : education > 0 ? "District ECCE Coordinator" : "Supervisor · Tirupati Block",
+      completion: "10 Days",
+      priority: conduct > 0 || water > 0 ? "high" : "medium",
+      complaintReduction: conduct > 0 ? "45%" : education > 0 ? "55%" : "25%",
+      welfareImprovement: "18%",
+      satisfactionImprovement: conduct > 0 ? "+28%" : "+20%",
+      confidenceScore: 85,
+      estimatedBudget: conduct > 0 ? "₹5,000" : education > 0 ? "₹5,000" : "₹2,000",
+    },
+  ];
+}

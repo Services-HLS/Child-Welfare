@@ -1,6 +1,8 @@
 import { Link, useParams } from "react-router-dom";
+import { useMemo } from "react";
 import { useApp } from "@/context/AppContext";
 import { generateCenterIntelligenceReport } from "@/services/ai/investigation-engine";
+import { buildCenterAnalyticsRecommendations } from "@/services/grievance/anganwadiAnalyticsRecommendations";
 import {
   ExecutiveReportShell,
   ExecutiveSection,
@@ -10,10 +12,11 @@ import {
   ExecutiveBarChart,
   ExecutivePieLegend,
 } from "@/components/executive/ExecutiveReport";
-import { AIRecommendationList, mapInvestigationRecommendation } from "@/components/executive/AIRecommendationCard";
+import { AIRecommendationList } from "@/components/executive/AIRecommendationCard";
 import { mockCenters } from "@/data/mockData";
 import { format } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CenterIntelligenceReportPage() {
   const { id, centerId } = useParams<{ id?: string; centerId?: string }>();
@@ -22,6 +25,15 @@ export default function CenterIntelligenceReportPage() {
   const report = generateCenterIntelligenceReport(resolvedCenterId, complaints);
   const center = mockCenters.find((c) => c.id === resolvedCenterId);
   const centerGrievances = complaints.filter((c) => c.centerId === resolvedCenterId);
+
+  const centerRecommendations = useMemo(
+    () => buildCenterAnalyticsRecommendations(complaints, resolvedCenterId),
+    [complaints, resolvedCenterId]
+  );
+
+  const handleApplyRecommendation = (rec: (typeof centerRecommendations)[number]) => {
+    toast.success(`Recommendation applied for ${center?.name ?? report.centerName}: ${rec.recommendation} · Budget ${rec.estimatedBudget}`);
+  };
 
   let section = 0;
 
@@ -159,7 +171,19 @@ export default function CenterIntelligenceReportPage() {
       </ExecutiveSection>
 
       <ExecutiveSection title="AI Recommendations" number={++section}>
-        <AIRecommendationList items={report.recommendations.map(mapInvestigationRecommendation)} />
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="h-4 w-4 text-[#1e40af]" />
+          <p className="text-xs text-slate-600">
+            {centerRecommendations.length} AI actions based on all {centerGrievances.length} grievance(s) at{" "}
+            {center?.name ?? report.centerName}. Click <strong>Show</strong> for full explanation.
+          </p>
+        </div>
+        <div className="mt-4">
+          <AIRecommendationList
+            items={centerRecommendations}
+            onApplyRecommendation={handleApplyRecommendation}
+          />
+        </div>
       </ExecutiveSection>
 
       <ExecutiveSection title="Center Performance Dashboard" number={++section}>
