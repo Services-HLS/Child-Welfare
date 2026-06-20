@@ -341,7 +341,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     loadActivities().then((l) => { if (l?.length) setActivities(l); });
     loadFeedback().then((l) => { if (l?.length) setFeedback(l); });
     loadCitizenExperiences().then((l) => { if (l?.length) setCitizenExperiences(l); });
-    loadComplaints().then((l) => { if (l?.length) setComplaints(l); });
+    loadComplaints().then((l) => {
+      setComplaints(mergeDemoGrievances(l?.length ? l : mockComplaints));
+    });
     loadNotifications().then((l) => { if (l?.length) setNotifications(l); });
     loadSessions().then((l) => { if (l?.length) setSessions(l); });
     loadCoaching().then((l) => { if (l?.length) setCoachingAssignments(l); });
