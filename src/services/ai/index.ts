@@ -1,7 +1,7 @@
 export { translateText } from "./translation";
 export { analyzeSentiment } from "./sentiment";
 export { classifyFeedback } from "./classification";
-export { speechToText, isSpeechRecognitionSupported, captureSpeechFromMicrophone } from "./speech";
+export { speechToText, isSpeechRecognitionSupported, captureSpeechFromMicrophone, captureSpeechWithMeta } from "./speech";
 export { extractTextFromDocument, isOcrSupportedFile, detectDocumentLanguage } from "./document-ocr";
 export { verifyServiceDelivery } from "./verification";
 export { generateRiskAlerts } from "./alerts";

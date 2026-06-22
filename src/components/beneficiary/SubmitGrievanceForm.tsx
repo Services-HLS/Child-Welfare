@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ComplaintCategory } from "@/types/platform";
 import { PublicFeedbackSubmitterType } from "@/types/public-context";
 import { PublicEvidenceItem } from "@/types/public-request";
@@ -9,7 +9,7 @@ import { useVoiceInput } from "@/hooks/useVoiceInput";
 import { Lang } from "@/types/platform";
 import { VOICE_LANG_NATIVE } from "@/lib/voiceLang";
 import { cn } from "@/lib/utils";
-import { Mic, Loader2, Square } from "lucide-react";
+import { Mic, Square } from "lucide-react";
 import { toast } from "sonner";
 
 const SUBMITTER_OPTIONS: { id: PublicFeedbackSubmitterType; label: string }[] = [
@@ -73,7 +73,8 @@ function titleFromDescription(text: string): string {
 
 export function SubmitGrievanceForm({ defaultMobile = "", defaultName = "", onSubmit, loading }: Props) {
   const { lang, setLang, t } = useApp();
-  const { listening, error, listen, supported } = useVoiceInput(lang);
+  const { listening, error, startListening, stopListening, supported } = useVoiceInput(lang);
+  const descriptionBeforeRecording = useRef("");
 
   const [submittedAs, setSubmittedAs] = useState<PublicFeedbackSubmitterType>("parent_caregiver");
   const [category, setCategory] = useState<ComplaintCategory>("nutrition_quality");
@@ -107,30 +108,35 @@ export function SubmitGrievanceForm({ defaultMobile = "", defaultName = "", onSu
 
   const center = CENTERS.find((c) => c.id === centerId) ?? CENTERS[0];
 
-  const applyVoiceTranscript = (transcript: string) => {
+  const finishVoiceRecording = (transcript: string, usedFallback: boolean) => {
     const trimmed = transcript.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setDescription(descriptionBeforeRecording.current);
+      return;
+    }
 
-    setDescription((prev) => (prev.trim() ? `${prev.trim()} ${trimmed}` : trimmed));
-    if (!title.trim()) setTitle(titleFromDescription(trimmed));
-
-    setEvidence((prev) => [
-      ...prev.filter((e) => e.type !== "voice"),
-      {
-        id: `voice-${Date.now()}`,
-        type: "voice",
-        label: `Voice complaint (${VOICE_LANG_NATIVE[lang]})`,
-        text: trimmed,
-        uploadedAt: new Date().toISOString(),
-      },
-    ]);
+    const base = descriptionBeforeRecording.current;
+    setDescription(base ? `${base} ${trimmed}` : trimmed);
     toast.success(t("voiceCapturedToast"));
+    if (usedFallback) {
+      toast.info(t("voiceMicUnavailable"), { description: t("voiceCapturedToast") });
+    }
   };
 
-  const handleVoiceInput = async () => {
-    if (listening) return;
-    const transcript = await listen();
-    if (transcript) applyVoiceTranscript(transcript);
+  const handleStartVoice = async () => {
+    if (listening || loading) return;
+    descriptionBeforeRecording.current = description.trim();
+    await startListening((interim) => {
+      const base = descriptionBeforeRecording.current;
+      setDescription(base ? `${base} ${interim}` : interim);
+    });
+  };
+
+  const handleStopVoice = async () => {
+    if (!listening) return;
+    const result = await stopListening();
+    if (result) finishVoiceRecording(result.text, result.usedFallback);
+    else setDescription(descriptionBeforeRecording.current);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -232,18 +238,26 @@ export function SubmitGrievanceForm({ defaultMobile = "", defaultName = "", onSu
                 {VOICE_LANG_NATIVE[l]}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={handleVoiceInput}
-              disabled={listening || loading}
-              className={cn(
-                "flex items-center gap-1.5 text-xs font-bold rounded-sm px-3 py-1.5 border transition-colors",
-                listening ? "border-[#1e40af] bg-[#1e40af] text-white" : "border-[#1e40af] text-[#1e40af] hover:bg-blue-50"
-              )}
-            >
-              {listening ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mic className="h-3.5 w-3.5" />}
-              {listening ? t("listeningSpeakNow") : t("speakComplaint")}
-            </button>
+            {!listening ? (
+              <button
+                type="button"
+                onClick={handleStartVoice}
+                disabled={loading}
+                className="flex items-center gap-1.5 text-xs font-bold rounded-sm px-3 py-1.5 border border-[#1e40af] text-[#1e40af] hover:bg-blue-50 transition-colors"
+              >
+                <Mic className="h-3.5 w-3.5" />
+                {t("speakComplaint")}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStopVoice}
+                className="flex items-center gap-1.5 text-xs font-bold rounded-sm px-3 py-1.5 border border-red-600 bg-red-600 text-white hover:bg-red-700 animate-pulse transition-colors"
+              >
+                <Square className="h-3.5 w-3.5 fill-current" />
+                {t("stopRecording")}
+              </button>
+            )}
           </div>
         </div>
         <textarea
@@ -251,7 +265,11 @@ export function SubmitGrievanceForm({ defaultMobile = "", defaultName = "", onSu
           onChange={(e) => setDescription(e.target.value)}
           required
           rows={5}
-          className="w-full rounded-sm border px-3 py-2 text-sm"
+          readOnly={listening}
+          className={cn(
+            "w-full rounded-sm border px-3 py-2 text-sm",
+            listening && "border-[#1e40af] bg-blue-50/40 ring-2 ring-[#1e40af]/20"
+          )}
           placeholder={t("voiceDescriptionPlaceholder")}
           dir={lang === "hi" ? "auto" : undefined}
         />
@@ -263,8 +281,9 @@ export function SubmitGrievanceForm({ defaultMobile = "", defaultName = "", onSu
         </p>
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         {listening && (
-          <p className="text-xs text-[#1e40af] mt-1 flex items-center gap-1">
-            <Square className="h-3 w-3 fill-current" /> {t("voiceRecordingHint")}
+          <p className="text-xs text-red-600 mt-1 flex items-center gap-1.5 font-semibold">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+            {t("voiceRecordingHint")} · {t("stopRecording")}
           </p>
         )}
       </div>

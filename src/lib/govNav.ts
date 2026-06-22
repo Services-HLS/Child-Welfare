@@ -21,6 +21,7 @@ import {
   Target,
 } from "lucide-react";
 import type { Role } from "@/types/platform";
+import { WhatsAppNavIcon } from "@/components/icons/WhatsAppNavIcon";
 
 export type GovNavItem = {
   to: string;
@@ -41,6 +42,7 @@ export const GOV_NAV: Record<Role, GovNavSection[]> = {
       { to: "/beneficiary/my-grievances", labelKey: "my_grievances", icon: FileText },
       { to: "/beneficiary/submit-grievance", labelKey: "submit_grievance", icon: ShieldCheck },
       { to: "/beneficiary/track-grievance", labelKey: "track_grievance", icon: MapPin },
+      { to: "/beneficiary/whatsapp", labelKey: "whatsapp_simulation", icon: WhatsAppNavIcon },
       { to: "/beneficiary/notifications", labelKey: "communication_center", icon: Bell },
     ]},
     { sectionKey: "nav_know_your_child", collapsible: true, items: [
@@ -169,6 +171,7 @@ export const ROUTE_META: Record<string, { titleKey: string; descKey: string }> =
   "/beneficiary/my-grievances/:id": { titleKey: "my_grievances", descKey: "my_grievances_subtitle" },
   "/beneficiary/submit-grievance": { titleKey: "submit_grievance", descKey: "submit_grievance_subtitle" },
   "/beneficiary/track-grievance": { titleKey: "track_grievance", descKey: "track_grievance_card_desc" },
+  "/beneficiary/whatsapp": { titleKey: "whatsapp_simulation", descKey: "whatsapp_simulation_subtitle" },
   "/beneficiary/profile": { titleKey: "public_profile", descKey: "public_profile_subtitle" },
   "/worker": { titleKey: "daily_operations", descKey: "daily_operations_desc" },
   "/worker/dashboard": { titleKey: "daily_operations_console", descKey: "daily_operations_desc" },

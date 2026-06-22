@@ -24,6 +24,7 @@ export type ComplaintStatus =
   | "resolution"
   | "beneficiary_confirmation"
   | "closed"
+  | "rejected"
   /** @deprecated legacy statuses — mapped in timeline */
   | "submitted"
   | "ai_classification"

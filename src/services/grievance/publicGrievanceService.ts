@@ -17,7 +17,7 @@ export function hasSupervisorStartedReview(c: ComplaintRecord): boolean {
 }
 
 export function supervisorBucket(c: ComplaintRecord): SupervisorGrievanceBucket {
-  if (c.status === "closed" || c.status === "beneficiary_confirmation") return "resolved";
+  if (c.status === "closed" || c.status === "beneficiary_confirmation" || c.status === "rejected") return "resolved";
   if (c.status === "need_evidence") return "need_evidence";
   if (["district_escalation", "state_escalation", "resolution"].includes(c.status)) return "in_review";
   if (["ai_processing", "channel_intake", "classified", "submitted"].includes(c.status)) return "new";

@@ -535,7 +535,7 @@ export function getCitizenTimelineStep(status: string): number {
   const map: Record<string, number> = {
     submitted: 0, channel_intake: 0, ai_processing: 1, ai_classification: 1, classified: 1,
     supervisor_review: 2, assigned: 2, worker_review: 3, need_evidence: 3,
-    resolution: 4, beneficiary_confirmation: 5, closed: 6,
+    resolution: 4, beneficiary_confirmation: 5, closed: 6, rejected: 6,
     district_escalation: 3, state_escalation: 3,
   };
   return map[status] ?? 0;

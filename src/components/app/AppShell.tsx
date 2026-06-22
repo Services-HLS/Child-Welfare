@@ -169,12 +169,14 @@ function SidebarNav({
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, t } = useApp();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!user) return null;
   const role = normalizeRole(user.role);
   const sections = GOV_NAV[role] ?? [];
+  const isWhatsAppChat = location.pathname === "/beneficiary/whatsapp";
 
   return (
     <TransparencyProvider>
@@ -220,14 +222,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           <main
             id="app-main-content"
             className={cn(
-              "flex-1 min-h-[calc(100vh-3.25rem)] transition-all duration-300",
+              "flex-1 transition-all duration-300",
+              isWhatsAppChat ? "min-h-0 overflow-hidden" : "min-h-[calc(100vh-3.25rem)]",
               "lg:ml-64",
               isCollapsed && "lg:ml-16",
-              "pb-20 lg:pb-8",
-              role === "worker" && "bg-[#eef2f6]"
+              isWhatsAppChat ? "pb-0" : "pb-20 lg:pb-8",
+              role === "worker" && !isWhatsAppChat && "bg-[#eef2f6]"
             )}
           >
-            <div className="p-4 sm:p-6 lg:p-8 w-full max-w-none">
+            <div
+              className={cn(
+                "w-full max-w-none",
+                isWhatsAppChat ? "p-0 h-full" : "p-4 sm:p-6 lg:p-8"
+              )}
+            >
               <GovernmentPageFrame>
                 {role === "worker" ? (
                   <WorkerFlowProvider>

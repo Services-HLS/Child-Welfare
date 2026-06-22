@@ -50,6 +50,7 @@ import MyGrievances from "./pages/beneficiary/MyGrievances.tsx";
 import MyGrievanceDetail from "./pages/beneficiary/MyGrievanceDetail.tsx";
 import SubmitGrievance from "./pages/beneficiary/SubmitGrievance.tsx";
 import TrackGrievance from "./pages/beneficiary/TrackGrievance.tsx";
+import WhatsAppSimulation from "./pages/beneficiary/WhatsAppSimulation.tsx";
 import BeneficiaryFeedback from "./pages/beneficiary/Feedback.tsx";
 import BeneficiaryComplaints from "./pages/beneficiary/Complaints.tsx";
 import BeneficiaryStatus from "./pages/beneficiary/Status.tsx";
@@ -133,6 +134,7 @@ const App = () => (
             <Route path="/beneficiary/my-grievances/:id" element={<Protected role="beneficiary"><MyGrievanceDetail /></Protected>} />
             <Route path="/beneficiary/submit-grievance" element={<Protected role="beneficiary"><SubmitGrievance /></Protected>} />
             <Route path="/beneficiary/track-grievance" element={<Protected role="beneficiary"><TrackGrievance /></Protected>} />
+            <Route path="/beneficiary/whatsapp" element={<Protected role="beneficiary"><WhatsAppSimulation /></Protected>} />
             <Route path="/beneficiary/feedback" element={<Protected role="beneficiary"><BeneficiaryFeedback /></Protected>} />
             <Route path="/beneficiary/complaints" element={<Protected role="beneficiary"><BeneficiaryComplaints /></Protected>} />
             <Route path="/beneficiary/status" element={<Protected role="beneficiary"><BeneficiaryStatus /></Protected>} />

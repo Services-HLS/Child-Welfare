@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { usePublicPortal } from "@/hooks/usePublicPortal";
+import { filterBeneficiaryGrievances } from "@/services/beneficiary/beneficiaryGrievances";
 import { PublicPageHeader } from "@/components/beneficiary/ParentPageHeader";
 import { format } from "date-fns";
 import { Plus, ChevronRight, FileText } from "lucide-react";
@@ -10,13 +11,10 @@ export default function MyGrievances() {
   const { user, t } = useApp();
   const { complaints } = usePublicPortal();
 
-  const myGrievances = useMemo(() => {
-    const uid = user?.id ?? "";
-    const mobile = user?.phone;
-    return complaints
-      .filter((c) => c.beneficiaryId === uid || (mobile && c.registeredMobile === mobile))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [complaints, user?.id, user?.phone]);
+  const myGrievances = useMemo(
+    () => filterBeneficiaryGrievances(complaints, user?.id ?? "", user?.phone),
+    [complaints, user?.id, user?.phone]
+  );
 
   return (
     <div className="space-y-6 pb-24 w-full max-w-none">

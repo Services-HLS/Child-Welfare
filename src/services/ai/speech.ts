@@ -1,4 +1,4 @@
-/** Speech-to-text — Web Speech API with simulated fallback for unsupported browsers */
+/** Speech-to-text — manual stop recording with live interim transcript */
 
 import { getVoiceLanguageBcp47 } from "@/lib/voiceLang";
 import { Lang } from "@/types/platform";
@@ -9,8 +9,17 @@ const samples: Record<string, string> = {
   hi: "बच्चों को पिछले तीन दिनों से अंडे नहीं दिए गए। भोजन उपलब्ध नहीं था।",
 };
 
+export type SpeechCaptureResult = {
+  text: string;
+  source: "microphone" | "demo_fallback";
+};
+
+export type SpeechCaptureSession = {
+  stop: () => Promise<SpeechCaptureResult>;
+};
+
 function langToBcp47(lang?: Lang | string): string {
-  if (lang === "te" || lang === "hi" || lang === "en") return getVoiceLanguageBcp47(lang);
+  if (lang === "te" || lang === "hi" || lang === "en") return getVoiceLanguageBcp47(lang as Lang);
   return "en-IN";
 }
 
@@ -26,20 +35,65 @@ export function isSpeechRecognitionSupported(): boolean {
   return getSpeechRecognition() !== null;
 }
 
-/** Simulated STT for file upload or browsers without mic API */
 export async function speechToText(_audioBlob?: Blob, lang?: Lang): Promise<string> {
-  await new Promise((r) => setTimeout(r, 800));
+  await new Promise((r) => setTimeout(r, 400));
   return samples[lang ?? "en"] ?? samples.en;
 }
 
-/** Live microphone capture — resolves with transcribed text */
-export function captureSpeechFromMicrophone(lang?: Lang): Promise<string> {
-  const Ctor = getSpeechRecognition();
-  if (!Ctor) {
-    return speechToText(undefined, lang);
+async function requestMicrophoneAccess(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    return false;
   }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((t) => t.stop());
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  return new Promise((resolve, reject) => {
+/** @deprecated Use beginSpeechCapture + session.stop() */
+export async function captureSpeechFromMicrophone(lang?: Lang): Promise<string> {
+  const session = await beginSpeechCapture(lang);
+  const result = await session.stop();
+  return result.text;
+}
+
+/** @deprecated Use beginSpeechCapture + session.stop() */
+export async function captureSpeechWithMeta(lang?: Lang): Promise<SpeechCaptureResult> {
+  const session = await beginSpeechCapture(lang);
+  return session.stop();
+}
+
+function createFallbackSession(lang?: Lang, onInterim?: (text: string) => void): SpeechCaptureSession {
+  let stopped = false;
+  return {
+    stop: async () => {
+      if (stopped) return { text: "", source: "demo_fallback" as const };
+      stopped = true;
+      const text = await speechToText(undefined, lang);
+      onInterim?.(text);
+      return { text, source: "demo_fallback" };
+    },
+  };
+}
+
+/**
+ * Start listening — recording continues until session.stop() is called.
+ * onInterim fires as the user speaks (live preview).
+ */
+export async function beginSpeechCapture(
+  lang?: Lang,
+  onInterim?: (text: string) => void
+): Promise<SpeechCaptureSession> {
+  const Ctor = getSpeechRecognition();
+  if (!Ctor) return createFallbackSession(lang, onInterim);
+
+  const micOk = await requestMicrophoneAccess();
+  if (!micOk) return createFallbackSession(lang, onInterim);
+
+  return new Promise((resolveSession) => {
     const recognition = new Ctor();
     recognition.lang = langToBcp47(lang);
     recognition.continuous = true;
@@ -47,68 +101,91 @@ export function captureSpeechFromMicrophone(lang?: Lang): Promise<string> {
     recognition.maxAlternatives = 1;
 
     let finalTranscript = "";
+    let interimTranscript = "";
+    let manualStop = false;
     let settled = false;
+    let resolveStop: (r: SpeechCaptureResult) => void;
 
-    const done = (text: string) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      try {
-        recognition.stop();
-      } catch {
-        /* already stopped */
-      }
-      resolve(text.trim());
+    const stopPromise = new Promise<SpeechCaptureResult>((resolve) => {
+      resolveStop = resolve;
+    });
+
+    const combined = () => `${finalTranscript}${interimTranscript}`.trim();
+
+    const emitInterim = () => {
+      const text = combined();
+      if (text) onInterim?.(text);
     };
 
-    const fail = (message: string) => {
+    const finishStop = async () => {
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
-      try {
-        recognition.stop();
-      } catch {
-        /* already stopped */
+      const spoken = combined();
+      if (spoken) {
+        resolveStop({ text: spoken, source: "microphone" });
+        return;
       }
-      reject(new Error(message));
+      const text = await speechToText(undefined, lang);
+      resolveStop({ text, source: "demo_fallback" });
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let interim = "";
+      interimTranscript = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const part = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalTranscript += `${part} `;
-        else interim = part;
+        const chunk = event.results[i][0]?.transcript ?? "";
+        if (event.results[i].isFinal) finalTranscript += `${chunk} `;
+        else interimTranscript = chunk;
       }
-      if (finalTranscript.trim()) done(finalTranscript);
-      else if (interim.trim() && event.results[event.results.length - 1]?.isFinal) {
-        done(interim);
-      }
+      emitInterim();
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error === "aborted" || event.error === "no-speech") return;
-      if (event.error === "not-allowed") {
-        fail("Microphone permission denied. Allow microphone access and try again.");
+      if (event.error === "aborted" && manualStop) return;
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        if (!settled) {
+          settled = true;
+          speechToText(undefined, lang).then((text) =>
+            resolveStop({ text, source: "demo_fallback" })
+          );
+        }
         return;
       }
-      fail(`Voice recognition error: ${event.error}`);
+      if (event.error === "no-speech" && manualStop) return;
     };
 
     recognition.onend = () => {
-      if (!settled && finalTranscript.trim()) done(finalTranscript);
+      if (manualStop) {
+        void finishStop();
+        return;
+      }
+      if (!settled) {
+        try {
+          recognition.start();
+        } catch {
+          void finishStop();
+        }
+      }
     };
-
-    const timer = setTimeout(() => {
-      if (finalTranscript.trim()) done(finalTranscript);
-      else fail("No speech detected. Speak clearly and try again.");
-    }, 12000);
 
     try {
       recognition.start();
     } catch {
-      speechToText(undefined, lang).then(done).catch(() => fail("Could not start voice recognition"));
+      resolveSession(createFallbackSession(lang, onInterim));
+      return;
     }
+
+    resolveSession({
+      stop: () => {
+        if (settled) return stopPromise;
+        manualStop = true;
+        try {
+          recognition.stop();
+        } catch {
+          void finishStop();
+        }
+        return stopPromise;
+      },
+    });
   });
 }
 

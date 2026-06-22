@@ -151,9 +151,9 @@ export const DEMO_GRIEVANCES: ComplaintRecord[] = [
   }),
   buildDemo({
     id: "GRV-240006",
-    beneficiaryId: "PUB-006",
+    beneficiaryId: "B-1001",
     beneficiaryName: "Sunita Rao",
-    registeredMobile: "9123456701",
+    registeredMobile: "9876501234",
     centerId: "AWC-TPT-01",
     centerName: "Alipiri Center",
     village: "Alipiri",
