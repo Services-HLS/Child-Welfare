@@ -5,8 +5,8 @@ export const ROLE_HOME: Record<Role, string> = {
   beneficiary: "/beneficiary/my-grievances",
   worker: "/worker/dashboard",
   supervisor: "/supervisor",
-  district_admin: "/district-admin/grievance-command",
-  state_admin: "/state-admin/grievance-command",
+  district_admin: "/district-admin/mission-control",
+  state_admin: "/state-admin/mission-control",
 };
 
 export function roleHomePath(role: Role | string): string {

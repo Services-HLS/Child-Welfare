@@ -212,6 +212,7 @@ const App = () => (
             {/* District Admin (legacy /admin redirects) */}
             <Route path="/admin" element={<AdminLegacyRedirect />} />
             <Route path="/admin/*" element={<AdminLegacyRedirect />} />
+            <Route path="/district-admin/grievance-command" element={<Navigate to="/district-admin/mission-control" replace />} />
             <Route path="/district-admin" element={<Protected role="district_admin"><AdminDashboard /></Protected>} />
             <Route path="/district-admin/mission-control" element={<Protected role="district_admin"><MissionControl scope="district" /></Protected>} />
             <Route path="/district-admin/compliance" element={<Protected role="district_admin"><AdminCompliance /></Protected>} />
@@ -229,6 +230,7 @@ const App = () => (
             <Route path="/district-admin/session-review/:sessionId" element={<Protected role="district_admin"><DistrictSessionReview /></Protected>} />
 
             {/* State Admin */}
+            <Route path="/state-admin/grievance-command" element={<Navigate to="/state-admin/mission-control" replace />} />
             <Route path="/state-admin" element={<Protected role="state_admin"><StateAdminDashboard /></Protected>} />
             <Route path="/state-admin/compliance" element={<Protected role="state_admin"><AdminCompliance /></Protected>} />
             <Route path="/state-admin/complaints" element={<Protected role="state_admin"><StateAdminComplaints /></Protected>} />
